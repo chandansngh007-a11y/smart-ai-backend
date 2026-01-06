@@ -1,45 +1,30 @@
 import express from "express";
 import fetch from "node-fetch";
-import cors from "cors";
 
 const app = express();
-app.use(cors());
 app.use(express.json());
 
-// 🔐 Gemini API key (Render Environment Variable)
-const GEMINI_KEY = process.env.GEMINI;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// 🔎 Debug (Render logs me true aana chahiye)
-console.log("GEMINI key loaded:", !!GEMINI_KEY);
-
-// ✅ Health check
-app.get("/", (req, res) => {
-  res.json({ status: "Smart AI Backend is running 🚀" });
-});
-
-// ✅ Chat API
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
-
     if (!userMessage) {
-      return res.status(400).json({ reply: "Message missing" });
+      return res.json({ reply: "Message missing" });
     }
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_KEY}`,
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=" + GEMINI_API_KEY,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
             {
-              parts: [{ text: userMessage }],
-            },
-          ],
-        }),
+              parts: [{ text: userMessage }]
+            }
+          ]
+        })
       }
     );
 
@@ -47,17 +32,17 @@ app.post("/chat", async (req, res) => {
 
     const reply =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response from AI";
+      "No response from Gemini";
 
     res.json({ reply });
-  } catch (error) {
-    console.error("AI Error:", error);
-    res.status(500).json({ reply: "AI error occurred" });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ reply: "AI error" });
   }
 });
 
-// ✅ Render PORT handling
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Smart AI Backend running on port ${PORT}`);
+  console.log("Smart AI Backend running on port", PORT);
 });
